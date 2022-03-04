@@ -1,6 +1,8 @@
 pragma solidity ^0.8.0;
+
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import './interface/IDepartmentFactory.sol';
+import './interface/IContractRegister.sol';
 
 contract DaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -17,9 +19,9 @@ contract DaoManager {
     }
     // join limit types
     uint public limitType;
-    struct ComponentsAddrs {
-        
-    }
+    // struct ComponentsAddrs {
+
+    // }
 
     // the info of join limit one
     struct JoinLimitOne {
@@ -32,6 +34,11 @@ contract DaoManager {
         address token;
         uint holderAmount;
     }
+    struct Group {
+        uint id;
+        string name;
+        address addr;
+    }
     //todo   nft limit
     address public manager;
     DaoBase public daoBaseInfo;
@@ -39,27 +46,34 @@ contract DaoManager {
     JoinLimitOne public limitOne;
     JoinLimitTwo public limitTwo;
     address public creator;
+    address public router;
     bool public firstSetManager;
     bool public firstSetJoinLimit;
+
     EnumerableSet.AddressSet private users;
+    // Group[]  groups;
+    mapping(uint => Group) public  groups;
+    uint public groupCount;
     constructor(
         string memory _name,
         string memory _desc,
         string memory _logo,
         address _govToken,
         bool _isRainbowToken,
-        address _creator
+        address _creator,
+        address _router
     ) public  {
         daoBaseInfo = DaoBase ({
             name : _name,
             desc:_desc,
-            log:_logo
+            logo:_logo
         });
         govToken = GovToken ({
             token : _govToken,
             isRainbowToken:_isRainbowToken
         });
         creator = _creator;
+        router = _router;
     }
 
     // set the dao manager
@@ -73,7 +87,7 @@ contract DaoManager {
         manager = _manager;
     }
     // set the join limit
-    function setJoinLimit(uint _limitType,JoinLimitOne _limitOne,JoinLimitTwo _limitTwo) public {
+    function setJoinLimit(uint _limitType,JoinLimitOne memory _limitOne,JoinLimitTwo memory _limitTwo) public {
         if(firstSetJoinLimit == false){
             require(msg.sender == creator,'no access');
         }else{
@@ -110,11 +124,11 @@ contract DaoManager {
             return lists;
         }*/
     // get user length
-    function getUserLength() public {
+    function getUserLength() public view returns(uint) {
         return users.length();
     }
     // get user index
-    function getUserByIndex(uint index) public {
+    function getUserByIndex(uint index) public view returns(address) {
         return users.at(index);
     }
 
@@ -122,10 +136,17 @@ contract DaoManager {
         users.remove(msg.sender);
     }
 
-    function newGroup() public {
-        IDepartmentFactory()
+    // create a new department
+    function newDepartment(string memory _name) public {
+        address departmentFactoryAddr = IContractRegister(router).routers('DepartmentFactory');
+        address departmentAddr = IDepartmentFactory(departmentFactoryAddr).newDepartment();
+        groupCount++;
+        uint id = groupCount;
+        Group storage g = groups[id];
+        g.id = id;
+        g.name = _name;
+        g.addr = departmentAddr;
     }
-
     // Check whether users can join
     function _checkUserJoin() internal {
 
