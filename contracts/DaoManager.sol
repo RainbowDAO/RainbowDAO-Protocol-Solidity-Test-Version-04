@@ -148,7 +148,5 @@ contract DaoManager {
         g.addr = departmentAddr;
     }
     // Check whether users can join
-    function _checkUserJoin() internal {
-
-    }
+    function _checkUserJoin() internal {}
 }
