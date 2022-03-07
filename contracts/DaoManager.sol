@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import './interface/IDepartmentFactory.sol';
 import './interface/IContractRegister.sol';
-
-contract DaoManager {
+import './interface/IDaoManager.sol';
+import './interface/IDaoVaultFactory.sol';
+contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
     struct DaoBase{
@@ -38,17 +39,18 @@ contract DaoManager {
         uint id;
         string name;
         address addr;
+        bool dismiss;
     }
     //todo   nft limit
-    address public manager;
+    address public override manager;
+    bool public dismiss;
     DaoBase public daoBaseInfo;
     GovToken public govToken;
     JoinLimitOne public limitOne;
     JoinLimitTwo public limitTwo;
-    address public creator;
+    // address public creator;
     address public router;
-    bool public firstSetManager;
-    bool public firstSetJoinLimit;
+    address public vault;
 
     EnumerableSet.AddressSet private users;
     // Group[]  groups;
@@ -72,28 +74,19 @@ contract DaoManager {
             token : _govToken,
             isRainbowToken:_isRainbowToken
         });
-        creator = _creator;
-        router = _router;
+       manager = _creator;
+    }
+    modifier  _isOwner() {
+        require(msg.sender == manager);
+        _;
     }
 
     // set the dao manager
-    function setManager(address _manager) public {
-        if(firstSetManager == false){
-            require(msg.sender == creator,'no access');
-        }else{
-            require(msg.sender == manager,'no access');
-            firstSetManager = true;
-        }
+    function setManager(address _manager) public _isOwner {
         manager = _manager;
     }
     // set the join limit
-    function setJoinLimit(uint _limitType,JoinLimitOne memory _limitOne,JoinLimitTwo memory _limitTwo) public {
-        if(firstSetJoinLimit == false){
-            require(msg.sender == creator,'no access');
-        }else{
-            require(msg.sender == manager,'no access');
-            firstSetJoinLimit = true;
-        }
+    function setJoinLimit(uint _limitType,JoinLimitOne memory _limitOne,JoinLimitTwo memory _limitTwo) public _isOwner{
         limitType = _limitType;
         if(_limitType == 1){
             limitOne = _limitOne;
@@ -108,7 +101,7 @@ contract DaoManager {
     // user join dao
     function joinDao() public {
         _checkUserJoin();
-        require(users.contains(msg.sender) == false,'Already joined');
+        require(checkUserExists(msg.sender) == false,'Already joined');
         users.add(msg.sender);
     }
 
@@ -123,6 +116,7 @@ contract DaoManager {
             }
             return lists;
         }*/
+
     // get user length
     function getUserLength() public view returns(uint) {
         return users.length();
@@ -137,7 +131,7 @@ contract DaoManager {
     }
 
     // create a new department
-    function newDepartment(string memory _name) public {
+    function newDepartment(string memory _name) public _isOwner returns(address){
         address departmentFactoryAddr = IContractRegister(router).routers('DepartmentFactory');
         address departmentAddr = IDepartmentFactory(departmentFactoryAddr).newDepartment();
         groupCount++;
@@ -146,7 +140,28 @@ contract DaoManager {
         g.id = id;
         g.name = _name;
         g.addr = departmentAddr;
+        return departmentAddr;
     }
     // Check whether users can join
     function _checkUserJoin() internal {}
+
+    //Check whether the user exists
+    function checkUserExists(address _user) public override view returns(bool) {
+        return users.contains(_user);
+    }
+
+    // dismiss a group
+    function dismissDepartment(uint _id) public _isOwner {
+        groups[_id].dismiss = true;
+        
+
+    }
+
+    // create a vault
+    function createVault() public {
+        require(vault == address(0),'Already create');
+        address vaultFactoryAddr = IContractRegister(router).routers('DaoVaultFactory');
+        address vaultAddr = IDaoVaultFactory(vaultFactoryAddr).newVault();
+        vault = vaultAddr;
+    }
 }
