@@ -5,6 +5,7 @@ import './interface/IDepartmentFactory.sol';
 import './interface/IContractRegister.sol';
 import './interface/IDaoManager.sol';
 import './interface/IDaoVaultFactory.sol';
+import './interface/IDepartment.sol';
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -41,6 +42,11 @@ contract DaoManager is IDaoManager {
         address addr;
         bool dismiss;
     }
+    struct union {
+        bool open; //if opened
+        EnumerableSet.AddressSet  daos; // the dao list
+        string name;
+    }
     //todo   nft limit
     address public override manager;
     bool public dismiss;
@@ -64,7 +70,7 @@ contract DaoManager is IDaoManager {
         bool _isRainbowToken,
         address _creator,
         address _router
-    ) public  {
+    ){
         daoBaseInfo = DaoBase ({
             name : _name,
             desc:_desc,
@@ -75,6 +81,7 @@ contract DaoManager is IDaoManager {
             isRainbowToken:_isRainbowToken
         });
        manager = _creator;
+       router = _router;
     }
     modifier  _isOwner() {
         require(msg.sender == manager);
@@ -152,9 +159,9 @@ contract DaoManager is IDaoManager {
 
     // dismiss a group
     function dismissDepartment(uint _id) public _isOwner {
+        require(vault != address(0),'Vault has not been created');
         groups[_id].dismiss = true;
-        
-
+        IDepartment(groups[_id].addr).dismiss(vault);
     }
 
     // create a vault

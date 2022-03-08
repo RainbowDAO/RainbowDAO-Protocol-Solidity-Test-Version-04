@@ -1,7 +1,9 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interface/IDaoManager.sol';
+import './lib/TransferHelper.sol';
 contract Department {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -13,8 +15,12 @@ contract Department {
     address public manager;
     // Enable join validation
     bool public joinVerify;
+    bool public dismissStatus;
 
-    constructor(address _dao) public {
+    //todo  this group's token  
+    address public token;
+
+    constructor(address _dao){
         dao = _dao;
     }
 
@@ -22,9 +28,13 @@ contract Department {
         require(msg.sender == manager);
         _;
     }
+    modifier  _isOpen() {
+        require(dismissStatus == false ,'the group is close');
+        _;
+    }
 
     // join this group
-    function joinGroup() public {
+    function joinGroup() public _isOpen {
         require(IDaoManager(dao).checkUserExists(msg.sender) == true ,'not in this dao');
         if(joinVerify){
             require(verifyUsers.contains(msg.sender) == false,'Already joined');
@@ -35,12 +45,12 @@ contract Department {
         }
     }
     //leave this group
-    function leaveGroup() public {
+    function leaveGroup() public  {
         users.remove(msg.sender);
     }
 
     // set the group manager
-    function setManager(address _manager) public {
+    function setManager(address _manager) public _isOpen {
         require(msg.sender == getDaoManager(),'no access');
         manager  = _manager;
     }
@@ -72,7 +82,7 @@ contract Department {
     }
 
     // Add the user to be approved to the Department
-    function examineVerifyUser(address _user) public _isOwner {
+    function examineVerifyUser(address _user) public _isOwner _isOpen {
         require(verifyUsers.contains(msg.sender) == true,'not found this user apply');
         require(users.contains(msg.sender) == false,'Already this user');
         verifyUsers.remove(_user);
@@ -80,15 +90,16 @@ contract Department {
     }
     
     // set the join verify
-    function setJoinVerify(bool _status) public _isOwner {
+    function setJoinVerify(bool _status) public _isOwner  _isOpen {
         joinVerify = _status;
     }
     
-    function dismiss(address _vault) public {
+    //dismiss this group
+    function dismiss(address _vault) public override _isOpen {
         require(msg.sender == dao ,'no access');
-        
+        dismissStatus = true;
+        uint balance = IERC20(token).balanceOf(address(this));
+        TransferHelper.safeTransfer(token,_vault,balance);
     }
-
-   
 
 }

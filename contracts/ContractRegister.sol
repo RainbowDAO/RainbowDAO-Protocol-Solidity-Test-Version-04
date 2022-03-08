@@ -5,7 +5,7 @@ import './interface/IContractRegister.sol';
 contract ContractRegister is IContractRegister {
     mapping (string => address) public override routers;
     address public manager;
-    constructor() public {
+    constructor(){
         manager = msg.sender;
     }
 

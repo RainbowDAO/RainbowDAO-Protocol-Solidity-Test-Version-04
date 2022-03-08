@@ -3,7 +3,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract erc20  is ERC20{
     address public admin;
     bool public isMint;
-    constructor(address _manager,uint _totalSupply,string memory _name,string memory _symbol,bool _isMint) public ERC20(_name,_symbol){
+    constructor(address _manager,uint _totalSupply,string memory _name,string memory _symbol,bool _isMint) ERC20(_name,_symbol){
         admin = _manager;
         isMint = _isMint;
         _mint(_manager, _totalSupply * 10 ** 18);
