@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
@@ -170,11 +171,11 @@ contract DaoManager is IDaoManager {
         address vaultAddr = IDaoVaultFactory(vaultFactoryAddr).newVault();
         vault = vaultAddr;
     }
-    // set the union info
+    // create a  union dao
     function createUnion(string memory _name) public {
         require(unionDao == address(0),'Already create');
         address UnionDaoFactoryAddr = IContractRegister(router).routers('UnionDaoFactory');
-        address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao();
+        address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao(_name);
         unionDao = unionDaoAddr;
     }
 
