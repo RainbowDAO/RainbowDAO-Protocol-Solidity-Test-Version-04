@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
@@ -6,6 +7,8 @@ import './interface/IContractRegister.sol';
 import './interface/IDaoManager.sol';
 import './interface/IDaoVaultFactory.sol';
 import './interface/IDepartment.sol';
+import './interface/IUnionDaoFactory.sol';
+
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -42,11 +45,6 @@ contract DaoManager is IDaoManager {
         address addr;
         bool dismiss;
     }
-    struct union {
-        bool open; //if opened
-        EnumerableSet.AddressSet  daos; // the dao list
-        string name;
-    }
     //todo   nft limit
     address public override manager;
     bool public dismiss;
@@ -54,9 +52,12 @@ contract DaoManager is IDaoManager {
     GovToken public govToken;
     JoinLimitOne public limitOne;
     JoinLimitTwo public limitTwo;
-    // address public creator;
+
     address public router;
+    // the vault address
     address public vault;
+    // the unionDao address
+    address public override unionDao;
 
     EnumerableSet.AddressSet private users;
     // Group[]  groups;
@@ -171,4 +172,16 @@ contract DaoManager is IDaoManager {
         address vaultAddr = IDaoVaultFactory(vaultFactoryAddr).newVault();
         vault = vaultAddr;
     }
+    // create a  union dao
+    function createUnion(string memory _name) public {
+        require(unionDao == address(0),'Already create');
+        address UnionDaoFactoryAddr = IContractRegister(router).routers('UnionDaoFactory');
+        address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao(_name);
+        unionDao = unionDaoAddr;
+    }
+
+    function joinUnionDao(address _unionDao) public _isOwner {
+        
+    }
+
 }
