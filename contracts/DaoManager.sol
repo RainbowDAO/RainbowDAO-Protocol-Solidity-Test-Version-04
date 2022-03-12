@@ -8,6 +8,7 @@ import './interface/IDaoManager.sol';
 import './interface/IDaoVaultFactory.sol';
 import './interface/IDepartment.sol';
 import './interface/IUnionDaoFactory.sol';
+
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -56,7 +57,7 @@ contract DaoManager is IDaoManager {
     // the vault address
     address public vault;
     // the unionDao address
-    address public unionDao;
+    address public override unionDao;
 
     EnumerableSet.AddressSet private users;
     // Group[]  groups;
@@ -177,6 +178,10 @@ contract DaoManager is IDaoManager {
         address UnionDaoFactoryAddr = IContractRegister(router).routers('UnionDaoFactory');
         address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao(_name);
         unionDao = unionDaoAddr;
+    }
+
+    function joinUnionDao(address _unionDao) public _isOwner {
+        
     }
 
 }
