@@ -8,7 +8,7 @@ import './interface/IDaoManager.sol';
 import './interface/IDaoVaultFactory.sol';
 import './interface/IDepartment.sol';
 import './interface/IUnionDaoFactory.sol';
-
+import './interface/IUnionDao.sol';
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -16,6 +16,7 @@ contract DaoManager is IDaoManager {
         string  name;
         string  desc;
         string  logo;
+        uint daoType;
     }
     // store the government token
     struct GovToken {
@@ -57,7 +58,7 @@ contract DaoManager is IDaoManager {
     // the vault address
     address public vault;
     // the unionDao address
-    address public override unionDao;
+    EnumerableSet.AddressSet private unionDaos;
 
     EnumerableSet.AddressSet private users;
     // Group[]  groups;
@@ -70,12 +71,15 @@ contract DaoManager is IDaoManager {
         address _govToken,
         bool _isRainbowToken,
         address _creator,
-        address _router
+        address _router,
+        uint _daoType
     ){
         daoBaseInfo = DaoBase ({
             name : _name,
             desc:_desc,
-            logo:_logo
+            logo:_logo,
+            daoType:_daoType
+
         });
         govToken = GovToken ({
             token : _govToken,
@@ -174,14 +178,19 @@ contract DaoManager is IDaoManager {
     }
     // create a  union dao
     function createUnion(string memory _name) public {
-        require(unionDao == address(0),'Already create');
         address UnionDaoFactoryAddr = IContractRegister(router).routers('UnionDaoFactory');
         address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao(_name);
-        unionDao = unionDaoAddr;
+        unionDaos.add(unionDaoAddr);
+    }
+    // check exists uniondao
+    function existsUnionDao(address _unionDao) public override view returns(bool){
+        return unionDaos.contains(_unionDao);
     }
 
     function joinUnionDao(address _unionDao) public _isOwner {
-        
+        require(existsUnionDao(_unionDao) == false ,'exists this unionDao');
+        IUnionDao(_unionDao).join();
+        unionDaos.add(_unionDao);
     }
 
 }

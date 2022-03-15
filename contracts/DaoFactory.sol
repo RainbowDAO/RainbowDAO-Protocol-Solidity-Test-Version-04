@@ -8,8 +8,8 @@ contract DaoFactory {
     constructor(address _router){
         router = _router;
     }
-    function newDao(string memory _name,string memory _desc, string memory _logo,address _govToken, bool _isRainbowToken) public returns(address) {
-        DaoManager dao = new DaoManager(_name,_desc,_logo,_govToken,_isRainbowToken,msg.sender,router);
+    function newDao(string memory _name,string memory _desc, string memory _logo,address _govToken, bool _isRainbowToken,uint _daoType) public returns(address) {
+        DaoManager dao = new DaoManager(_name,_desc,_logo,_govToken,_isRainbowToken,msg.sender,router,_daoType);
         daos.push(address(dao));
         return address(dao);
     }
