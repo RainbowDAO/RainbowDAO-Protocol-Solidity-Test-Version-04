@@ -87,6 +87,9 @@ contract DaoManager is IDaoManager {
         });
        manager = _creator;
        router = _router;
+       if(_daoType == 2 || _daoType == 4){
+           createUnion(_name);
+       }
     }
     modifier  _isOwner() {
         require(msg.sender == manager);
@@ -187,6 +190,7 @@ contract DaoManager is IDaoManager {
         return unionDaos.contains(_unionDao);
     }
 
+    // join a union dao
     function joinUnionDao(address _unionDao) public _isOwner {
         require(existsUnionDao(_unionDao) == false ,'exists this unionDao');
         IUnionDao(_unionDao).join();
