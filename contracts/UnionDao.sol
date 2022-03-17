@@ -19,4 +19,4 @@ contract UnionDao is IUnionDao{
         daos.add(msg.sender);
     }
 
-}
+} 

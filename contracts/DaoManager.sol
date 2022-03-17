@@ -9,6 +9,7 @@ import './interface/IDaoVaultFactory.sol';
 import './interface/IDepartment.sol';
 import './interface/IUnionDaoFactory.sol';
 import './interface/IUnionDao.sol';
+import './interface/IDaoFactory.sol';
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -16,7 +17,7 @@ contract DaoManager is IDaoManager {
         string  name;
         string  desc;
         string  logo;
-        uint daoType;
+        uint daoType;//1 independent 2 union 3 child 4 union&child
     }
     // store the government token
     struct GovToken {
@@ -57,10 +58,17 @@ contract DaoManager is IDaoManager {
     address public router;
     // the vault address
     address public vault;
-    // the unionDao address
+    // All the alliances this Dao joins
     EnumerableSet.AddressSet private unionDaos;
 
     EnumerableSet.AddressSet private users;
+
+    address public parentDao;
+
+    // List of child Daos audited as parent and child Daos
+    EnumerableSet.AddressSet private pendIngChildDaos;
+    // ceremonial child daos
+    EnumerableSet.AddressSet private childDaos;
     // Group[]  groups;
     mapping(uint => Group) public  groups;
     uint public groupCount;
@@ -72,7 +80,8 @@ contract DaoManager is IDaoManager {
         bool _isRainbowToken,
         address _creator,
         address _router,
-        uint _daoType
+        uint _daoType,
+        address _parentDao
     ){
         daoBaseInfo = DaoBase ({
             name : _name,
@@ -88,7 +97,11 @@ contract DaoManager is IDaoManager {
        manager = _creator;
        router = _router;
        if(_daoType == 2 || _daoType == 4){
-           createUnion(_name);
+           _createUnion(_name);
+       }
+       if(_parentDao != address(0)) {
+           parentDao = _parentDao;
+           IDaoManager(_parentDao).addPendingChildDao(address(this));
        }
     }
     modifier  _isOwner() {
@@ -100,6 +113,7 @@ contract DaoManager is IDaoManager {
     function setManager(address _manager) public _isOwner {
         manager = _manager;
     }
+    
     // set the join limit
     function setJoinLimit(uint _limitType,JoinLimitOne memory _limitOne,JoinLimitTwo memory _limitTwo) public _isOwner{
         limitType = _limitType;
@@ -144,7 +158,9 @@ contract DaoManager is IDaoManager {
     function leaveDao() public {
         users.remove(msg.sender);
     }
-
+    function addPendingChildDao(address _dao) public override{
+        pendIngChildDaos.add(_dao);
+    }
     // create a new department
     function newDepartment(string memory _name) public _isOwner returns(address){
         address departmentFactoryAddr = IContractRegister(router).routers('DepartmentFactory');
@@ -180,7 +196,7 @@ contract DaoManager is IDaoManager {
         vault = vaultAddr;
     }
     // create a  union dao
-    function createUnion(string memory _name) public {
+    function _createUnion(string memory _name) internal {
         address UnionDaoFactoryAddr = IContractRegister(router).routers('UnionDaoFactory');
         address unionDaoAddr = IUnionDaoFactory(UnionDaoFactoryAddr).newUnionDao(_name);
         unionDaos.add(unionDaoAddr);
@@ -195,6 +211,18 @@ contract DaoManager is IDaoManager {
         require(existsUnionDao(_unionDao) == false ,'exists this unionDao');
         IUnionDao(_unionDao).join();
         unionDaos.add(_unionDao);
+    }
+    function createChildDao(
+        string memory _name,
+        string memory _desc, 
+        string memory _logo,
+        address _govToken, 
+        bool _isRainbowToken,
+        address _manager
+        ) public _isOwner {
+        address DaoFactoryAddr = IContractRegister(router).routers('DaoFactory');
+        address newDaoAddr = IDaoFactory(DaoFactoryAddr).newDao(_name,_desc,_logo,_govToken,_isRainbowToken,_manager,3,address(this));
+        childDaos.add(newDaoAddr);
     }
 
 }
