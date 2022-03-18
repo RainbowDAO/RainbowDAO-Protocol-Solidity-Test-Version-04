@@ -212,6 +212,7 @@ contract DaoManager is IDaoManager {
         IUnionDao(_unionDao).join();
         unionDaos.add(_unionDao);
     }
+    // create a child dao
     function createChildDao(
         string memory _name,
         string memory _desc, 
