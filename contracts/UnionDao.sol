@@ -14,7 +14,7 @@ contract UnionDao is IUnionDao{
         name = _name;
     }
 
-    function join() external override{
+    function join() external override {
         require(IDaoManager(msg.sender).existsUnionDao(address(this)) == false,'Already exists this unionDao');
         daos.add(msg.sender);
     }
