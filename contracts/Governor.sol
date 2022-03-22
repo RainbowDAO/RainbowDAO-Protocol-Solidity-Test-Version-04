@@ -6,5 +6,6 @@ contract Governor {
     constructor(address _govToken) {
         govToken = _govToken;
     }
+    
 
 }
