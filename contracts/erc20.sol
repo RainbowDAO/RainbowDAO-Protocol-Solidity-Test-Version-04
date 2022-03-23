@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-contract erc20  is ERC20{
+import "./interface/IToken.sol";
+contract erc20  is ERC20,IToken {
     address public admin;
     bool public isMint;
 
@@ -14,9 +15,9 @@ contract erc20  is ERC20{
     }
     mapping (address => mapping (uint32 => Checkpoint)) public checkpoints;
     mapping (address => uint32) public numCheckpoints;
-    mapping (address => mapping(uint => uint) ) public  delegateVotes; // to delegate
+    mapping (address => mapping(uint => uint) ) public override delegateVotes; // to delegate
     mapping (address => mapping(uint => uint)) public doDelegateVotes; //from delegate
-    mapping (uint => uint) public allDelegateVotes;
+    mapping (uint => uint) public override allDelegateVotes;
     mapping (address => mapping(address => DelegateInfo)) private userDelegateRelation; // from with to
     event DelegateVotesChanged(address indexed delegate, uint previousBalance, uint newBalance);
 
@@ -33,12 +34,14 @@ contract erc20  is ERC20{
     function mint(address _user,uint _amount) public _isOwner {
         require(isMint == true,'mint is not allowed');
         _mint(_user, _amount * 10 ** 18);
+        _addDelegates(_user, safe96(_amount * 10 ** 18,"token: token amount underflows"));
     }
+    // override the transfer
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         _transferToken(msg.sender,recipient,amount);
         return true;
     }
-
+    // overridr the transferfrom
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
         _transferToken(sender,recipient,amount);
         uint256 currentAllowance = allowance(sender,_msgSender());
@@ -46,11 +49,12 @@ contract erc20  is ERC20{
         _approve(sender, _msgSender(), currentAllowance-amount);
         return true;
     }
+    // get the user current votes
     function getCurrentVotes(address account) external view returns (uint96) {
         uint32 nCheckpoints = numCheckpoints[account];
         return nCheckpoints > 0 ? checkpoints[account][nCheckpoints - 1].votes : 0;
     }
-
+    // delegate the tickets to user
     function delegateVote(address to,uint amount,uint blockNumber) public {
         uint priorVotes = getPriorVotes(msg.sender,blockNumber);
         require(amount <= priorVotes,'not enough');
@@ -59,12 +63,12 @@ contract erc20  is ERC20{
         userDelegateRelation[msg.sender][to].delegateDetail[blockNumber] = amount;
         allDelegateVotes[blockNumber] += amount;
     }
-
+    // use the delegate tickets
     function useDelegateVote(address sender,uint amount,uint blockNumber) override external {
         require(amount <=  delegateVotes[sender][blockNumber],'not enough');
         delegateVotes[sender][blockNumber]-=amount;
     }
-
+    //get the user amount at block
     function getPriorVotes(address account, uint blockNumber) public view returns (uint96) {
         require(blockNumber < block.number, "token::getPriorVotes: not yet determined");
 
