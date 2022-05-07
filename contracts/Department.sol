@@ -18,11 +18,20 @@ contract Department {
     bool public joinVerify;
     bool public dismissStatus;
 
-    //todo  this group's token  
+    //todo  this group's token
     address public token;
+    struct DepartmentBase{
+        string  name;
+        string  logo;
+    }
+    DepartmentBase public departmentBaseInfo;
 
-    constructor(address _dao){
+    constructor(address _dao,string memory _name,string memory _logo){
         dao = _dao;
+        departmentBaseInfo = DepartmentBase({
+            name:_name,
+            logo:_logo
+        });
     }
 
     modifier  _isOwner() {
@@ -62,7 +71,7 @@ contract Department {
        return IDaoManager(dao).manager();
     }
 
-    // get the user count 
+    // get the user count
     function getUserCount() public view returns(uint) {
         return users.length();
     }
@@ -72,7 +81,7 @@ contract Department {
         return users.at(_index);
     }
 
-     // get the verifyUsers count 
+     // get the verifyUsers count
     function getVerifyUserCount() public view returns(uint) {
         return verifyUsers.length();
     }
@@ -89,12 +98,12 @@ contract Department {
         verifyUsers.remove(_user);
         users.add(_user);
     }
-    
+
     // set the join verify
     function setJoinVerify(bool _status) public _isOwner  _isOpen {
         joinVerify = _status;
     }
-    
+
     //dismiss this group
     function dismiss(address _vault) public override _isOpen {
         require(msg.sender == dao ,'no access');
