@@ -4,8 +4,9 @@ pragma solidity ^0.8.0;
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interface/IDaoManager.sol';
+import './interface/IDepartment.sol';
 import './lib/TransferHelper.sol';
-contract Department {
+contract Department is IDepartment{
     using EnumerableSet for EnumerableSet.AddressSet;
 
     //Address of the Dao to which it belongs

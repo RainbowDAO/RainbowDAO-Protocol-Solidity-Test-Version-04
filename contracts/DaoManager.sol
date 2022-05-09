@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './interface/IDepartmentFactory.sol';
 import './interface/IContractRegister.sol';
 import './interface/IDaoManager.sol';
@@ -10,6 +11,8 @@ import './interface/IDepartment.sol';
 import './interface/IUnionDaoFactory.sol';
 import './interface/IUnionDao.sol';
 import './interface/IDaoFactory.sol';
+import './lib/TransferHelper.sol';
+
 contract DaoManager is IDaoManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     // store the dao base information
@@ -113,7 +116,7 @@ contract DaoManager is IDaoManager {
     function setManager(address _manager) public _isOwner {
         manager = _manager;
     }
-    
+
     // set the join limit
     function setJoinLimit(uint _limitType,JoinLimitOne memory _limitOne,JoinLimitTwo memory _limitTwo) public _isOwner{
         limitType = _limitType;
@@ -162,9 +165,9 @@ contract DaoManager is IDaoManager {
         pendIngChildDaos.add(_dao);
     }
     // create a new department
-    function newDepartment(string memory _name) public _isOwner returns(address){
+    function newDepartment(string memory _name,string memory _logo) public _isOwner returns(address){
         address departmentFactoryAddr = IContractRegister(router).routers('DepartmentFactory');
-        address departmentAddr = IDepartmentFactory(departmentFactoryAddr).newDepartment();
+        address departmentAddr = IDepartmentFactory(departmentFactoryAddr).newDepartment(_name,_logo);
         groupCount++;
         uint id = groupCount;
         Group storage g = groups[id];
@@ -174,7 +177,24 @@ contract DaoManager is IDaoManager {
         return departmentAddr;
     }
     // Check whether users can join
-    function _checkUserJoin() internal {}
+    function _checkUserJoin() internal {
+        if(limitType == 1) {
+            _checkOneLimit();
+        }else if(limitType == 2){
+            _checkTwoLimit();
+        }else if(limitType == 4){
+            _checkOneLimit();
+            _checkTwoLimit();
+        }
+    }
+
+    function _checkOneLimit() internal {
+        require(IERC20(limitOne.token).balanceOf(msg.sender) >= limitOne.tokenAmount,'not enough amount');
+        TransferHelper.safeTransferFrom(limitOne.token,msg.sender,vault,limitOne.tokenAmount);
+    }
+    function _checkTwoLimit() internal view {
+        require(IERC20(limitTwo.token).balanceOf(msg.sender) >= limitTwo.holderAmount,'not enough amount');
+    }
 
     //Check whether the user exists
     function checkUserExists(address _user) public override view returns(bool) {
@@ -215,9 +235,9 @@ contract DaoManager is IDaoManager {
     // create a child dao
     function createChildDao(
         string memory _name,
-        string memory _desc, 
+        string memory _desc,
         string memory _logo,
-        address _govToken, 
+        address _govToken,
         bool _isRainbowToken,
         address _manager
         ) public _isOwner {
