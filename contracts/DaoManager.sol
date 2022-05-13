@@ -190,7 +190,8 @@ contract DaoManager is IDaoManager {
 
     function _checkOneLimit() internal {
         require(IERC20(limitOne.token).balanceOf(msg.sender) >= limitOne.tokenAmount,'not enough amount');
-        TransferHelper.safeTransferFrom(limitOne.token,msg.sender,vault,limitOne.tokenAmount);
+        address to = vault == address(0) ? address(this) : vault;
+        TransferHelper.safeTransferFrom(limitOne.token,msg.sender,to,limitOne.tokenAmount);
     }
     function _checkTwoLimit() internal view {
         require(IERC20(limitTwo.token).balanceOf(msg.sender) >= limitTwo.holderAmount,'not enough amount');
