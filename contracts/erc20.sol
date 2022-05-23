@@ -69,7 +69,7 @@ contract erc20  is ERC20,IToken {
         delegateVotes[sender][blockNumber]-=amount;
     }
     //get the user amount at block
-    function getPriorVotes(address account, uint blockNumber) public view returns (uint96) {
+    function getPriorVotes(address account, uint blockNumber) override public view returns (uint96) {
         require(blockNumber < block.number, "token::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
