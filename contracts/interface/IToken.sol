@@ -5,4 +5,5 @@ interface IToken {
     function delegateVotes( address sender, uint blockNumber) external view returns(uint);
     function allDelegateVotes(uint blockNumber) external view returns(uint);
     function useDelegateVote(address sender,uint amount,uint blockNumber)  external;
+    function getPriorVotes(address account, uint blockNumber)  external view returns (uint96);
 }
