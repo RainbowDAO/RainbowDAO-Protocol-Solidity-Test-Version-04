@@ -248,3 +248,4 @@ contract DaoManager is IDaoManager {
     }
 
 }
+
