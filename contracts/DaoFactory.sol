@@ -20,4 +20,3 @@ contract DaoFactory is IDaoFactory {
         return daos.length;
     }
 }
-
