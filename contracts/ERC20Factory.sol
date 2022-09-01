@@ -7,3 +7,4 @@ contract ERC20Factory {
         return address(govToken);
     }
 }
+
