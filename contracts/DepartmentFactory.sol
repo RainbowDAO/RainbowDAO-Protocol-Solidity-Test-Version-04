@@ -8,3 +8,4 @@ contract DepartmentFactory is IDepartmentFactory {
         return address(dt);
     }
 }
+
