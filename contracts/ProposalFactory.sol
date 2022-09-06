@@ -15,3 +15,4 @@ contract ProposalFactory is IProposalFactory {
         return GovernorDaos.length;
     }
 }
+
