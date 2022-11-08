@@ -161,5 +161,4 @@ contract erc20  is ERC20,IToken {
         return a - b;
     }
 
-
 }
